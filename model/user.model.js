@@ -23,7 +23,7 @@ const userSchema = new Schema({
   },
   status: {
     type: String,
-    required: [true, 'Status is required'],
+    required: [false, 'Status is required'],
     enum: ['Active', 'Inactive'],
     default: 'Active'
   }
