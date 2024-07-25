@@ -2,6 +2,8 @@ const User = require('../model/user.model');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const otpGenerator = require('otp-generator');
+const axios = require('axios');
+const fast2smsConfig = require('../config/fast2sms.config');
 
 // User Signup
 exports.signup = async (req, res) => {
@@ -46,12 +48,52 @@ exports.login = async (req, res) => {
   }
 };
 
-// OTP Generation
+const otpStore = {}; // In-memory storage for OTPs. In a real application, use a database.
+
+// Send OTP
 exports.generateOtp = async (req, res) => {
+  const { mobile } = req.body;
+
   try {
+    // Generate OTP
     const otp = otpGenerator.generate(6, { upperCase: false, specialChars: false, alphabets: false });
-    // Save or send OTP to user as required
-    res.status(200).json({ otp });
+
+    // Save OTP to in-memory store (for simplicity; use a database in production)
+    otpStore[mobile] = otp;
+
+    // Send OTP via Fast2SMS
+    const message = `Your OTP code is ${otp}. Please do not share it with anyone.`;
+
+    await axios.post('https://www.fast2sms.com/dev/bulkV2', {
+      sender_id: 'FSTSMS',
+      message: message,
+      language: 'english',
+      route: 'p',
+      numbers: mobile,
+    }, {
+      headers: {
+        'authorization': fast2smsConfig.apiKey,
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+
+    res.status(200).json({ message: 'OTP sent successfully' });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+};
+
+// Verify OTP
+exports.verifyOtp = (req, res) => {
+  const { mobile, otp } = req.body;
+
+  try {
+    if (otpStore[mobile] === otp) {
+      delete otpStore[mobile]; // Remove OTP after verification
+      res.status(200).json({ message: 'OTP verified successfully' });
+    } else {
+      res.status(400).json({ message: 'Invalid OTP' });
+    }
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
