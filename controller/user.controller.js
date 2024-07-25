@@ -13,7 +13,7 @@ exports.signup = async (req, res) => {
         if (existingUser.status === 'Inactive') {
           existingUser.status = 'Active';
           await existingUser.save();
-          return res.status(200).json({ message: 'User reactivated successfully' });
+          return res.status(200).json({ message: 'User created successfully' });
         } else {
           return res.status(400).json({ message: 'User already exists' });
         }
