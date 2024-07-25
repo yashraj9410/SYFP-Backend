@@ -2,10 +2,9 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    await mongoose.connect('your_mongodb_connection_string', {
+    await mongoose.connect('mongodb+srv://yashraj:12345@syfpcluster.0nvwiot.mongodb.net/syfpProject?retryWrites=true&w=majority', {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      useCreateIndex: true,
     });
     console.log('MongoDB connected successfully');
   } catch (error) {
