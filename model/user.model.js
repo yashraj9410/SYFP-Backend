@@ -23,9 +23,12 @@ const userSchema = new Schema({
   },
   status: {
     type: String,
-    required: [false, 'Status is required'],
     enum: ['Active', 'Inactive'],
     default: 'Active'
+  },
+  address: {
+    type: String,
+    required: [true, 'Address is required'],
   }
 });
 

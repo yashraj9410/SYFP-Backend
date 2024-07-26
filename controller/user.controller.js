@@ -7,7 +7,7 @@ const fast2smsConfig = require('../config/fast2sms.config');
 
 // User Signup
 exports.signup = async (req, res) => {
-    const { name, email, password, mobile } = req.body;
+    const { name, email, password, mobile, address } = req.body;
     try {
       const existingUser = await User.findOne({ email });
   
@@ -22,7 +22,7 @@ exports.signup = async (req, res) => {
       }
   
       const hashedPassword = await bcrypt.hash(password, 10);
-      const newUser = new User({ name, email, password: hashedPassword, mobile, status: 'Active' });
+      const newUser = new User({ name, email, password: hashedPassword, mobile, status: 'Active', address });
       await newUser.save();
       res.status(201).json({ message: 'User created successfully' });
     } catch (error) {
