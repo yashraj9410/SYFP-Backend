@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authenticateToken = require('../middleware/jwtAuth');
+const userController = require('../controller/user.controller')
 
 router.post('/signup', userController.signup);
 router.post('/login', userController.login);

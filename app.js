@@ -2,6 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const connectDB = require('./config/db.config');
 const userRoutes = require('./routes/user.routes');
+const fuelStationRoutes = require('./routes/fuelStation.routes');
+
 const morgan = require('morgan');
 
 const app = express();
@@ -14,6 +16,7 @@ app.use(morgan('dev'));
 
 // Use the user routes
 app.use('/api', userRoutes);
+app.use('/api', fuelStationRoutes);
 
 // Connect to the database and start the server
 connectDB().then(() => {
