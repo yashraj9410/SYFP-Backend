@@ -48,56 +48,76 @@ exports.login = async (req, res) => {
   }
 };
 
-const otpStore = {}; // In-memory storage for OTPs. In a real application, use a database.
-
 // Send OTP
 exports.generateOtp = async (req, res) => {
-  const { mobile } = req.body;
-
-  try {
-    // Generate OTP
-    const otp = otpGenerator.generate(6, { upperCase: false, specialChars: false, alphabets: false });
-
-    // Save OTP to in-memory store (for simplicity; use a database in production)
-    otpStore[mobile] = otp;
-
-    // Send OTP via Fast2SMS
-    const message = `Your OTP code is ${otp}. Please do not share it with anyone.`;
-
-    await axios.post('https://www.fast2sms.com/dev/bulkV2', {
-      sender_id: 'FSTSMS',
-      message: message,
-      language: 'english',
-      route: 'p',
-      numbers: mobile,
-    }, {
-      headers: {
-        'authorization': fast2smsConfig.apiKey,
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    });
-
-    res.status(200).json({ message: 'OTP sent successfully' });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-};
+    const { mobile } = req.body;
+  
+    try {
+      // Generate OTP
+      const otp = otpGenerator.generate(6, { upperCase: false, specialChars: false, alphabets: false });
+  
+      // Calculate expiration time (e.g., 10 minutes from now)
+      const expiresAt = moment().add(10, 'minutes').toDate();
+  
+      // Save OTP to database
+      await Otp.findOneAndUpdate(
+        { mobile },
+        { otp, expiresAt },
+        { upsert: true, new: true } // Create if not exists, and return the updated document
+      );
+  
+      // Send OTP via Fast2SMS
+      const message = `Your OTP code is ${otp}. Please do not share it with anyone.`;
+  
+      await axios.get('https://www.fast2sms.com/dev/bulkV2', {
+        sender_id: 'FSTSMS',
+        message: message,
+        language: 'english',
+        route: 'q',
+        numbers: mobile,
+      }, {
+        headers: {
+          'authorization': fast2smsConfig.apiKey,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+  
+      res.status(200).json({ message: 'OTP sent successfully' });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  };
 
 // Verify OTP
-exports.verifyOtp = (req, res) => {
-  const { mobile, otp } = req.body;
-
-  try {
-    if (otpStore[mobile] === otp) {
-      delete otpStore[mobile]; // Remove OTP after verification
+exports.verifyOtp = async (req, res) => {
+    const { mobile, otp } = req.body;
+  
+    try {
+      // Find OTP from database
+      const otpRecord = await Otp.findOne({ mobile });
+  
+      // Check if OTP exists and has not expired
+      if (!otpRecord) {
+        return res.status(400).json({ message: 'OTP not found' });
+      }
+  
+      if (otpRecord.otp !== otp) {
+        return res.status(400).json({ message: 'Invalid OTP' });
+      }
+  
+      if (moment().isAfter(otpRecord.expiresAt)) {
+        await Otp.deleteOne({ mobile }); // Remove expired OTP
+        return res.status(400).json({ message: 'OTP has expired' });
+      }
+  
+      // OTP is valid
+      await Otp.deleteOne({ mobile }); // Remove OTP after verification
       res.status(200).json({ message: 'OTP verified successfully' });
-    } else {
-      res.status(400).json({ message: 'Invalid OTP' });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
     }
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-};
+  };
+  
 
 // Get User Detail
 exports.getUserDetail = async (req, res) => {
