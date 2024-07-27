@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 const connectDB = require('./config/db.config');
 const userRoutes = require('./routes/user.routes');
 const fuelStationRoutes = require('./routes/fuelStation.routes');
@@ -13,6 +14,7 @@ app.use(bodyParser.json());
 
 // Use Morgan for logging
 app.use(morgan('dev'));
+app.use(cors());
 
 // Use the user routes
 app.use('/api', userRoutes);
