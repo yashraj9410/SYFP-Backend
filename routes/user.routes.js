@@ -9,5 +9,6 @@ router.post('/generateOtp', userController.generateOtp);
 router.post('/verifyOtp', userController.verifyOtp); // New endpoint for OTP verification
 router.get('/user/:userId', authenticateToken, userController.getUserDetail);
 router.delete('/user/:userId', authenticateToken, userController.deleteUser);
+router.get('/v2.0/user/:id', userController.getUserDetails);
 
 module.exports = router;
