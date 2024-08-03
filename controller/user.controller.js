@@ -42,9 +42,9 @@ exports.login = async (req, res) => {
     if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
     const token = jwt.sign({ id: user._id, email: user.email }, 'your_jwt_secret', { expiresIn: '1h' });
-    res.status(200).json({ token });
+    res.status(200).json({ token , userId: user._id});
   } catch (error) {
-    res.status(400).json({ error: error.message });
+     res.status(400).json({ error: error.message });
   }
 };
 
@@ -128,6 +128,24 @@ exports.getUserDetail = async (req, res) => {
     res.status(200).json(user);
   } catch (error) {
     res.status(400).json({ error: error.message });
+  }
+};
+
+
+//V2 get details
+exports.getUserDetails = async (req, res) => {
+  const userId = req.params.id;
+
+  try {
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({ user });
+  } catch (error) {
+    res.status(500).json({ message: 'server error', error: error.message });
   }
 };
 
